@@ -101,6 +101,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = async (updatedUserData) => {
+    try {
+      const { password: _, ...userWithoutPassword } = updatedUserData;
+      setUser(userWithoutPassword);
+      await saveUser(userWithoutPassword);
+      return { success: true };
+    } catch (error) {
+      console.error("Erro ao atualizar usuário:", error);
+      return { success: false, message: "Erro ao atualizar usuário" };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -109,6 +121,7 @@ export const AuthProvider = ({ children }) => {
         signIn,
         signUp,
         signOut,
+        updateUser,
       }}
     >
       {children}
