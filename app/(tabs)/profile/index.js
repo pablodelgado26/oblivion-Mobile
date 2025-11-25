@@ -11,7 +11,8 @@ import {
   TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Componente para item de configuração
@@ -38,6 +39,7 @@ const SettingsItem = ({ iconName, title, subtitle, onPress, showArrow = true, ri
 
 export default function ProfileScreen() {
   const { user, signOut, updateUser } = useAuth();
+  const router = useRouter();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -105,27 +107,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const handlePrivacySecurity = () => {
-    Alert.alert(
-      "Privacidade e Segurança",
-      "Gerencie seus dados:\n\n• Seus dados são armazenados localmente\n• Nenhuma informação é enviada para servidores externos\n• Você pode excluir sua conta a qualquer momento"
-    );
-  };
-
-  const handleHelp = () => {
-    Alert.alert(
-      "Ajuda e Suporte",
-      "Central de Ajuda:\n\n• FAQ: Perguntas frequentes\n• Contato: suporte@oblivion.com\n• Documentação: oblivion.com/docs\n• Comunidade: Discord e Forum"
-    );
-  };
-
-  const handleAbout = () => {
-    Alert.alert(
-      "Sobre o App",
-      "Oblivion Mobile\nVersão 1.0.0\n\n© 2025 Oblivion\nTodos os direitos reservados\n\nDesenvolvido com:\n• React Native\n• Expo Router\n• AsyncStorage"
-    );
-  };
-
   const handleLogout = () => {
     Alert.alert("Sair", "Tem certeza que deseja sair?", [
       { text: "Cancelar", style: "cancel" },
@@ -182,8 +163,8 @@ export default function ProfileScreen() {
                 <Switch
                   value={notificationsEnabled}
                   onValueChange={toggleNotifications}
-                  trackColor={{ false: "#3A3A3C", true: "#34C759" }}
-                  thumbColor="#fff"
+                  trackColor={{ false: "#3A3A3C", true: "#6413ceff" }}
+                  thumbColor={notificationsEnabled ? "#34C759" : "#fff"}
                   ios_backgroundColor="#3A3A3C"
                 />
               }
@@ -200,8 +181,8 @@ export default function ProfileScreen() {
                 <Switch
                   value={emailAlertsEnabled}
                   onValueChange={toggleEmailAlerts}
-                  trackColor={{ false: "#3A3A3C", true: "#34C759" }}
-                  thumbColor="#fff"
+                  trackColor={{ false: "#3A3A3C", true: "#6413ceff" }}
+                  thumbColor={emailAlertsEnabled ? "#34C759" : "#fff"}
                   ios_backgroundColor="#3A3A3C"
                 />
               }
@@ -218,7 +199,7 @@ export default function ProfileScreen() {
               iconName="lock-closed-outline"
               title="Privacidade e Segurança"
               subtitle="Gerencie seus dados"
-              onPress={handlePrivacySecurity}
+              onPress={() => router.push("/(tabs)/profile/privacy")}
             />
 
             <View style={styles.separator} />
@@ -227,7 +208,7 @@ export default function ProfileScreen() {
               iconName="help-circle-outline"
               title="Ajuda e Suporte"
               subtitle="Central de ajuda"
-              onPress={handleHelp}
+              onPress={() => router.push("/(tabs)/profile/help")}
             />
 
             <View style={styles.separator} />
@@ -236,7 +217,7 @@ export default function ProfileScreen() {
               iconName="information-circle-outline"
               title="Sobre o App"
               subtitle="Versão 1.0.0"
-              onPress={handleAbout}
+              onPress={() => router.push("/(tabs)/profile/about")}
             />
           </View>
         </View>
@@ -304,7 +285,6 @@ export default function ProfileScreen() {
     </ScrollView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -504,4 +484,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-
