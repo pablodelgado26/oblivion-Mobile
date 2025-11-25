@@ -6,6 +6,7 @@ import {
   removeUser,
   validateLogin,
   saveNewUser,
+  updateUserInDB,
 } from "../utils/storage";
 import { useRouter, useSegments } from "expo-router";
 
@@ -94,11 +95,8 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      console.log("SignOut iniciado...");
-      const removed = await removeUser();
-      console.log("Usuário removido:", removed);
+      await removeUser();
       setUser(null);
-      console.log("Estado do user atualizado para null");
       // A navegação será tratada automaticamente pelo useEffect
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
@@ -109,6 +107,16 @@ export const AuthProvider = ({ children }) => {
   const updateUser = async (updatedUserData) => {
     try {
       const { password: _, ...userWithoutPassword } = updatedUserData;
+      
+      // Atualizar no banco de dados
+      const result = await updateUserInDB(updatedUserData);
+      
+      if (!result.success) {
+        Alert.alert("Erro", result.message);
+        return { success: false, message: result.message };
+      }
+      
+      // Atualizar estado local e AsyncStorage
       setUser(userWithoutPassword);
       await saveUser(userWithoutPassword);
       return { success: true };

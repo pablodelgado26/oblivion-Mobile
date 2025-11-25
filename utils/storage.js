@@ -102,3 +102,32 @@ export const clearAllData = async () => {
     return false;
   }
 };
+
+// Atualizar usuário no banco de dados
+export const updateUserInDB = async (updatedUser) => {
+  try {
+    const users = await getAllUsers();
+    const userIndex = users.findIndex((u) => u.id === updatedUser.id);
+
+    if (userIndex === -1) {
+      return { success: false, message: "Usuário não encontrado" };
+    }
+
+    // Verificar se o novo email já existe em outro usuário
+    const emailExists = users.some(
+      (u) => u.email === updatedUser.email && u.id !== updatedUser.id
+    );
+    if (emailExists) {
+      return { success: false, message: "Email já cadastrado por outro usuário" };
+    }
+
+    // Atualizar o usuário mantendo a senha original
+    users[userIndex] = { ...users[userIndex], ...updatedUser };
+    await AsyncStorage.setItem(STORAGE_KEYS.USERS_DB, JSON.stringify(users));
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao atualizar usuário no banco:", error);
+    return { success: false, message: "Erro ao atualizar usuário" };
+  }
+};
