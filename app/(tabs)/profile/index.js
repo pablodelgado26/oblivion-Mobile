@@ -108,14 +108,29 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert("Sair", "Tem certeza que deseja sair?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Sair",
-        style: "destructive",
-        onPress: signOut,
-      },
-    ]);
+    Alert.alert(
+      "Sair",
+      "Tem certeza que deseja sair da sua conta?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "Sair",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Chamar signOut do contexto
+              await signOut();
+            } catch (error) {
+              console.error("Erro ao sair:", error);
+            }
+          }
+        }
+      ],
+      { cancelable: true }
+    );
   };
 
   return (

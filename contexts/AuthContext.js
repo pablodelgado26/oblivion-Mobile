@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
+import { Alert } from "react-native";
 import {
   getUser,
   saveUser,
@@ -93,11 +94,15 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      await removeUser();
+      console.log("SignOut iniciado...");
+      const removed = await removeUser();
+      console.log("Usuário removido:", removed);
       setUser(null);
-      router.replace("/(auth)/login");
+      console.log("Estado do user atualizado para null");
+      // A navegação será tratada automaticamente pelo useEffect
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
+      Alert.alert("Erro", "Não foi possível sair da conta");
     }
   };
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 const InfoRow = ({ label, value }) => (
@@ -39,9 +39,10 @@ export default function AboutScreen() {
       <View style={styles.content}>
         {/* Logo e Nome */}
         <View style={styles.header}>
-          <View style={styles.appIcon}>
-            <Text style={styles.appIconText}>O</Text>
-          </View>
+          <Image
+            source={require("../../../assets/icon.png")}
+            style={styles.appIcon}
+          />
           <Text style={styles.appName}>Oblivion Mobile</Text>
           <Text style={styles.appTagline}>Seu app de gerenciamento pessoal</Text>
         </View>
@@ -151,15 +152,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 18,
-    backgroundColor: "#5856D6",
-    justifyContent: "center",
-    alignItems: "center",
     marginBottom: 16,
-  },
-  appIconText: {
-    fontSize: 40,
-    fontWeight: "bold",
-    color: "#fff",
   },
   appName: {
     fontSize: 28,
