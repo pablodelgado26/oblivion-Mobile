@@ -9,6 +9,9 @@ export default function TabsLayout() {
         tabBarStyle: {
           display: "none", // Esconde as tabs
         },
+        contentStyle: {
+          backgroundColor: "#000000",
+        },
       }}
     >
       <Tabs.Screen name="home" />

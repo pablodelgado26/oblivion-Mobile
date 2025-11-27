@@ -22,6 +22,8 @@
         "backgroundColor": "#5856D6"
       },
       "package": "com.oblivion.mobile",
+      "backgroundColor": "#000000",
+      "navigationBarColor": "#000000",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -37,6 +39,12 @@
           "imageWidth": 200
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f7fc529a-6e49-4e0f-8ea5-773006dd5eb1"
+      }
+    }
   }
 }

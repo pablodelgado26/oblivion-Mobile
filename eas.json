@@ -1,0 +1,28 @@
+{
+  "cli": {
+    "version": ">= 5.2.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyCL2xcwmiex9G_qL43j1PwYILO-04uR2C4"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyCL2xcwmiex9G_qL43j1PwYILO-04uR2C4"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

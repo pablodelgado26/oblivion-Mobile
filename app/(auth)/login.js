@@ -42,22 +42,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setEmail("demo@exemplo.com");
-    setPassword("demo123");
-    setErrorMessage("");
-    setLoading(true);
-    try {
-      const result = await signIn("demo@exemplo.com", "demo123");
-      if (!result.success) {
-        setErrorMessage(result.message || "Falha ao fazer login");
-      }
-    } catch (error) {
-      setErrorMessage("Falha ao fazer login");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <KeyboardAvoidingView
@@ -169,14 +153,7 @@ export default function LoginScreen() {
           <View style={styles.separator} />
         </View>
 
-        {/* Demo Button */}
-        <TouchableOpacity
-          style={styles.demoButton}
-          onPress={handleDemoLogin}
-          disabled={loading}
-        >
-          <Text style={styles.demoButtonText}>Acessar como Demo</Text>
-        </TouchableOpacity>
+
 
         {/* Register Link */}
         <View style={styles.registerContainer}>
