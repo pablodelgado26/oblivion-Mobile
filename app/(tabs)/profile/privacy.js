@@ -155,6 +155,7 @@ export default function PrivacyScreen() {
               icon="document-text-outline"
               title="Política de Privacidade"
               subtitle="Leia nossa política completa"
+              onPress={() => router.push("/(tabs)/profile/Privacy_page/politicas")}
             />
             <View style={styles.separator} />
             <ActionItem

@@ -44,6 +44,12 @@ export default function ProfileLayout() {
           headerBackTitle: "Voltar",
         }}
       />
+      <Stack.Screen
+        name="Privacy_page"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
