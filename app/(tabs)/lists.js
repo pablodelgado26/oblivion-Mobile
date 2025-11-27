@@ -100,7 +100,7 @@ export default function ListsScreen() {
               <TouchableOpacity
                 key={list.id}
                 style={styles.listCard}
-                onPress={() => router.push(`/list?id=${list.id}`)}
+                onPress={() => router.push(`/list_ID?id=${list.id}`)}
               >
                 <View style={styles.listHeader}>
                   <View style={styles.listIconContainer}>
