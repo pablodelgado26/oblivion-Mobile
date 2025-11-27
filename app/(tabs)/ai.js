@@ -9,12 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../contexts/AuthContext";
+import { saveList } from "../../utils/storage";
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+// Diagnóstico: loga se a API key está presente (não loga o valor)
+const isApiKeyPresent = typeof GEMINI_API_KEY === "string" && GEMINI_API_KEY.length > 0;
 
 export default function AIScreen() {
   const router = useRouter();
@@ -24,6 +28,9 @@ export default function AIScreen() {
   const [response, setResponse] = useState("");
   const [error, setError] = useState("");
   const [generatedList, setGeneratedList] = useState(null);
+  const [testing, setTesting] = useState(false);
+  const [modelsInfo, setModelsInfo] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const generateShoppingList = async () => {
     if (!prompt.trim()) {
@@ -32,7 +39,9 @@ export default function AIScreen() {
     }
 
     if (!GEMINI_API_KEY) {
-      setError("API Key do Gemini não configurada. Configure no arquivo .env");
+      setError(
+        "API Key do Gemini não configurada. Crie um arquivo .env na raiz com EXPO_PUBLIC_GEMINI_API_KEY=SUACHAVE e reinicie o Expo."
+      );
       return;
     }
 
@@ -44,7 +53,8 @@ export default function AIScreen() {
     try {
       const systemPrompt = `Você é um assistente de lista de compras. Baseado na descrição do usuário, gere uma lista de compras organizada.
 
-IMPORTANTE: Responda APENAS com um JSON válido no seguinte formato:
+CRÍTICO: Sua resposta deve ser SOMENTE um objeto JSON válido, sem texto adicional antes ou depois. Não use markdown, não explique, apenas retorne o JSON puro no formato exato abaixo:
+
 {
   "listName": "nome sugerido para a lista",
   "items": [
@@ -58,52 +68,157 @@ IMPORTANTE: Responda APENAS com um JSON válido no seguinte formato:
 
 Categorias válidas: "Frutas e Verduras", "Carnes", "Laticínios", "Bebidas", "Higiene", "Limpeza", "Padaria", "Congelados", "Outros"
 
-Descrição do usuário: ${prompt}`;
+Descrição do usuário: ${prompt}
 
-      const apiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: systemPrompt,
-                  },
-                ],
+Responda SOMENTE com o JSON, nada mais.`;
+
+      // Lista de modelos candidatos (ordem de preferência)
+      // Atualizada com modelos gemini-2.x disponíveis em v1beta e v1
+      const candidateModels = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-2.5-pro",
+        "gemini-flash-latest",
+        "gemini-pro-latest",
+        "gemini-2.0-flash-001",
+        "gemini-2.5-flash-lite",
+      ];
+
+      // Tenta em v1beta primeiro, depois v1, até encontrar um que funcione
+      const apiVersions = ["v1beta", "v1"];
+      let apiResponse;
+      let usedEndpoint = "";
+      let lastErrorBody = null;
+
+      for (const ver of apiVersions) {
+        for (const model of candidateModels) {
+          const endpoint = `https://generativelanguage.googleapis.com/${ver}/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+          usedEndpoint = endpoint;
+          apiResponse = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [ { parts: [ { text: systemPrompt } ] } ],
+              generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 1024,
               },
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 1024,
-            },
-          }),
-        }
-      );
+            }),
+          });
 
-      if (!apiResponse.ok) {
-        throw new Error("Falha ao gerar lista. Verifique sua API key.");
+          let bodyJson = null;
+          try {
+            bodyJson = await apiResponse.clone().json();
+            lastErrorBody = bodyJson;
+          } catch (_) {
+            // ignora erro de parse para tentativas
+          }
+
+          if (apiResponse.ok) {
+            break;
+          }
+        }
+        if (apiResponse?.ok) break;
+      }
+      let data;
+      try {
+        data = await apiResponse.json();
+      } catch (parseErr) {
+        // Se falhar ao parsear, mostra o status texto
+        const statusText = apiResponse.statusText || "Erro inesperado";
+        throw new Error(`Falha ao ler resposta da IA: ${statusText}`);
       }
 
-      const data = await apiResponse.json();
-      const textResponse =
-        data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (!apiResponse.ok) {
+        // Tenta extrair mensagem detalhada da API do Google
+        const apiError = data?.error || lastErrorBody?.error;
+        const apiMessage = apiError?.message || data?.message;
+        const apiCode = apiError?.code || apiResponse.status;
+        const redactedEndpoint = (usedEndpoint || "").replace(/key=[^&]+/, "key=***");
+        const hint = !isApiKeyPresent
+          ? "Chave ausente. Crie .env com EXPO_PUBLIC_GEMINI_API_KEY e reinicie."
+          : apiCode === 403 || apiCode === 401
+          ? "Chave inválida ou sem permissão. Revise sua API key e habilite a API Generative Language no Google Cloud."
+          : apiCode === 404
+          ? `Modelo/método não disponível. Endpoint tentado: ${redactedEndpoint}. Use o botão 'Testar Modelos' para ver quais estão disponíveis para sua chave.`
+          : "Verifique a conectividade e tente novamente.";
+        throw new Error(
+          `Falha ao gerar lista (${apiCode}). ${apiMessage || ""} ${hint}`.trim()
+        );
+      }
+      
+      // Debug: log estrutura completa da resposta
+      console.log("Resposta completa da API:", JSON.stringify(data, null, 2));
+      
+      // Extrair texto da resposta - suporta múltiplos formatos da API Gemini
+      let textResponse = "";
+      
+      if (data.candidates?.[0]?.content) {
+        const content = data.candidates[0].content;
+        
+        // Formato antigo: content.parts[0].text
+        if (content.parts && Array.isArray(content.parts) && content.parts[0]?.text) {
+          textResponse = content.parts[0].text;
+        }
+        // Formato novo: content.text direto
+        else if (typeof content.text === "string") {
+          textResponse = content.text;
+        }
+        // Fallback: se content é string diretamente
+        else if (typeof content === "string") {
+          textResponse = content;
+        }
+      }
+      
+      // Debug: verificar se textResponse está vazio
+      if (!textResponse) {
+        console.error("textResponse vazio. Estrutura completa:", JSON.stringify(data.candidates?.[0], null, 2));
+        setError(`Resposta vazia da API. Debug: ${JSON.stringify({
+          hasCandidates: !!data.candidates,
+          candidatesLength: data.candidates?.length,
+          hasContent: !!data.candidates?.[0]?.content,
+          contentKeys: data.candidates?.[0]?.content ? Object.keys(data.candidates[0].content) : null,
+        })}`);
+        setLoading(false);
+        return;
+      }
+      
+      console.log("Texto bruto recebido:", textResponse);
 
       setResponse(textResponse);
 
       // Tentar extrair JSON da resposta
-      const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
+      // Alguns modelos envolvem em markdown (```json ... ```)
+      let jsonText = textResponse;
+      
+      // Remove markdown code blocks se existirem
+      const codeBlockMatch = textResponse.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (codeBlockMatch) {
+        jsonText = codeBlockMatch[1].trim();
+      }
+      
+      // Tenta extrair o JSON
+      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsedList = JSON.parse(jsonMatch[0]);
-        setGeneratedList(parsedList);
+        try {
+          const parsedList = JSON.parse(jsonMatch[0]);
+          
+          // Valida estrutura básica
+          if (parsedList.listName && Array.isArray(parsedList.items)) {
+            setGeneratedList(parsedList);
+          } else {
+            console.warn("JSON inválido - estrutura incorreta:", parsedList);
+            setError("Resposta da IA não contém listName e items válidos. Resposta bruta: " + textResponse.substring(0, 200));
+          }
+        } catch (parseErr) {
+          console.error("Erro ao fazer parse do JSON:", parseErr);
+          setError("JSON inválido na resposta. Resposta bruta: " + textResponse.substring(0, 200));
+        }
       } else {
-        setError("Não foi possível processar a resposta da IA");
+        console.warn("Nenhum JSON encontrado na resposta:", textResponse);
+        setError("Não foi possível extrair JSON da resposta. Resposta bruta: " + textResponse.substring(0, 200));
       }
     } catch (err) {
       console.error("Erro ao gerar lista:", err);
@@ -113,14 +228,77 @@ Descrição do usuário: ${prompt}`;
     }
   };
 
-  const handleSaveList = () => {
-    if (generatedList) {
-      // TODO: Implementar salvamento da lista
-      // Por enquanto, apenas mostra mensagem
+  // Testar modelos disponíveis para a chave atual
+  const testModels = async () => {
+    if (!GEMINI_API_KEY) {
+      setError(
+        "API Key do Gemini não configurada. Crie .env com EXPO_PUBLIC_GEMINI_API_KEY e reinicie."
+      );
+      return;
+    }
+
+    setTesting(true);
+    setError("");
+    setModelsInfo(null);
+
+    const versions = ["v1beta", "v1"];
+    const results = [];
+
+    try {
+      for (const ver of versions) {
+        const url = `https://generativelanguage.googleapis.com/${ver}/models?key=${GEMINI_API_KEY}`;
+        const res = await fetch(url);
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (_) {}
+
+        if (res.ok && data?.models) {
+          results.push({ version: ver, models: data.models });
+        } else {
+          results.push({ version: ver, error: data?.error?.message || res.statusText });
+        }
+      }
+
+      setModelsInfo(results);
+    } catch (e) {
+      setError(e?.message || "Falha ao testar modelos");
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSaveList = async () => {
+    if (!generatedList || saving) return;
+
+    try {
+      setSaving(true);
       setError("");
-      setResponse("Lista salva com sucesso! (funcionalidade em desenvolvimento)");
-      setGeneratedList(null);
-      setPrompt("");
+
+      const listData = {
+        name: (generatedList.listName || "Lista da IA").toString().trim(),
+        items: (generatedList.items || []).map((item) => ({
+          name: (item.name || "Item").toString().trim(),
+          quantity: Number(item.quantity) || 1,
+          category: item.category ? item.category.toString().trim() : "Outros",
+        })),
+      };
+
+      const result = await saveList(listData);
+      if (result.success) {
+        Alert.alert("Sucesso", "Lista salva com sucesso!", [
+          { text: "OK", onPress: () => router.push("/(tabs)/lists") },
+        ]);
+        setGeneratedList(null);
+        setPrompt("");
+      } else {
+        Alert.alert("Erro", result.message || "Não foi possível salvar a lista");
+      }
+    } catch (e) {
+      console.error("Falha ao salvar lista da IA:", e);
+      Alert.alert("Erro", e?.message || "Falha ao salvar a lista");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -159,7 +337,7 @@ Descrição do usuário: ${prompt}`;
               <Ionicons name="arrow-back" size={24} color="#ffffff" />
             </TouchableOpacity>
             <View style={styles.logoContainer}>
-              <Ionicons name="sparkles" size={32} color="#8b5cf6" />
+              <Ionicons name="flash-outline" size={32} color="#8b5cf6" />
             </View>
             <Text style={styles.userName}>Olá, {user?.name}!</Text>
           </View>
@@ -223,7 +401,7 @@ Descrição do usuário: ${prompt}`;
                 <ActivityIndicator color="#fff" />
               ) : (
                 <>
-                  <Ionicons name="sparkles" size={20} color="#fff" />
+                  <Ionicons name="flash-outline" size={20} color="#fff" />
                   <Text style={styles.generateButtonText}>Gerar Lista</Text>
                 </>
               )}
@@ -239,6 +417,21 @@ Descrição do usuário: ${prompt}`;
                 <Text style={styles.clearButtonText}>Limpar</Text>
               </TouchableOpacity>
             )}
+
+            <TouchableOpacity
+              style={[styles.testButton, (testing || loading) && styles.buttonDisabled]}
+              onPress={testModels}
+              disabled={testing || loading}
+            >
+              {testing ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="cloud-outline" size={20} color="#fff" />
+                  <Text style={styles.testButtonText}>Testar Modelos</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -283,12 +476,44 @@ Descrição do usuário: ${prompt}`;
             </View>
 
             <TouchableOpacity
-              style={styles.saveButton}
+              style={[styles.saveButton, saving && styles.buttonDisabled]}
               onPress={handleSaveList}
+              disabled={saving}
             >
-              <Ionicons name="save-outline" size={20} color="#fff" />
-              <Text style={styles.saveButtonText}>Salvar Lista</Text>
+              {saving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="save-outline" size={20} color="#fff" />
+                  <Text style={styles.saveButtonText}>Salvar Lista</Text>
+                </>
+              )}
             </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Models Info */}
+        {modelsInfo && (
+          <View style={styles.modelsCard}>
+            <Text style={styles.modelsTitle}>Modelos disponíveis</Text>
+            {modelsInfo.map((group, idx) => (
+              <View key={idx} style={styles.modelsGroup}>
+                <Text style={styles.modelsVersion}>Versão {group.version}</Text>
+                {group.error ? (
+                  <Text style={styles.modelsError}>Erro: {group.error}</Text>
+                ) : (
+                  group.models.map((m, i) => (
+                    <View key={i} style={styles.modelItem}>
+                      <Ionicons name="cube-outline" size={16} color="#8b5cf6" />
+                      <Text style={styles.modelName}>{m.name}</Text>
+                    </View>
+                  ))
+                )}
+              </View>
+            ))}
+            <Text style={styles.modelsHint}>
+              Dica: use um dos modelos acima com generateContent. Se nenhum listar, verifique permissões da sua API key.
+            </Text>
           </View>
         )}
 
@@ -460,6 +685,23 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginLeft: 8,
   },
+  testButton: {
+    height: 48,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#27272a",
+    marginTop: 8,
+    backgroundColor: "#18181b",
+  },
+  testButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "500",
+    marginLeft: 8,
+  },
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -571,6 +813,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     marginLeft: 8,
+  },
+  modelsCard: {
+    backgroundColor: "#0f0f0f",
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "#27272a",
+    marginBottom: 16,
+  },
+  modelsTitle: {
+    fontSize: 18,
+    fontWeight: "500",
+    color: "#ffffff",
+    marginBottom: 12,
+  },
+  modelsGroup: {
+    marginBottom: 12,
+  },
+  modelsVersion: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#71717a",
+    marginBottom: 8,
+    textTransform: "uppercase",
+  },
+  modelItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  modelName: {
+    fontSize: 14,
+    color: "#ffffff",
+    marginLeft: 8,
+  },
+  modelsError: {
+    fontSize: 12,
+    color: "#dc2626",
+  },
+  modelsHint: {
+    fontSize: 12,
+    color: "#71717a",
+    marginTop: 8,
   },
   infoCard: {
     flexDirection: "row",

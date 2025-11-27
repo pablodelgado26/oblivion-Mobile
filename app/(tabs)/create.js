@@ -67,10 +67,7 @@ export default function CreateScreen() {
         Alert.alert("Sucesso", "Lista criada com sucesso!", [
           {
             text: "OK",
-            onPress: () => {
-              setSaving(false);
-              router.back();
-            },
+            onPress: () => router.back(),
           },
         ]);
       } else {

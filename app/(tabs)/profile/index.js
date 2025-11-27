@@ -38,7 +38,7 @@ const SettingsItem = ({ iconName, title, subtitle, onPress, showArrow = true, ri
 );
 
 export default function ProfileScreen() {
-  const { user, signOut, updateUser, deleteAccount } = useAuth();
+  const { user, signOut, updateUser } = useAuth();
   const router = useRouter();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false);
@@ -132,7 +132,6 @@ export default function ProfileScreen() {
       { cancelable: true }
     );
   };
-
 
   return (
     <ScrollView style={styles.container}>
@@ -251,7 +250,6 @@ export default function ProfileScreen() {
           <Ionicons name="log-out-outline" size={20} color="#FF453A" style={styles.logoutIcon} />
           <Text style={styles.logoutText}>Sair da Conta</Text>
         </TouchableOpacity>
-
       </View>
 
       {/* Modal de Edição de Perfil */}
@@ -452,26 +450,6 @@ const styles = StyleSheet.create({
     color: "#FF453A",
     fontSize: 17,
     fontWeight: "400",
-  },
-  deleteButton: {
-    flexDirection: "row",
-    backgroundColor: "#1C1C1E",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-    marginBottom: 40,
-    borderWidth: 1,
-    borderColor: "#FF453A",
-  },
-  deleteIcon: {
-    marginRight: 8,
-  },
-  deleteText: {
-    color: "#FF453A",
-    fontSize: 17,
-    fontWeight: "600",
   },
   // Modal Styles
   modalOverlay: {

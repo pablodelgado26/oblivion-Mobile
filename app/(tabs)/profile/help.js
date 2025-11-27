@@ -62,6 +62,14 @@ export default function HelpScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
+        {/* Back Button */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#ffffff" />
+        </TouchableOpacity>
+
         {/* Header */}
         <View style={styles.header}>
           <Ionicons name="help-buoy" size={48} color="#5856D6" />

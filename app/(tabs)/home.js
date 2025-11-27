@@ -17,7 +17,6 @@ const { width } = Dimensions.get("window");
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalLists: 0,
     totalItems: 0,
@@ -33,11 +32,6 @@ export default function HomeScreen() {
 
   const loadStats = async () => {
     try {
-      setLoading(true);
-      
-      // Simular delay de 1 segundo
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       const lists = await getAllLists();
       const totalLists = lists.length;
       const totalItems = lists.reduce((sum, list) => sum + list.items.length, 0);
@@ -55,8 +49,6 @@ export default function HomeScreen() {
       });
     } catch (error) {
       console.error("Erro ao carregar estatísticas:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -73,7 +65,7 @@ export default function HomeScreen() {
       id: "ai",
       title: "Assistente IA",
       subtitle: "Crie listas com IA",
-      icon: "sparkles",
+  icon: "flash-outline",
       color: "#ec4899",
       route: "/(tabs)/ai",
     },
@@ -118,68 +110,6 @@ export default function HomeScreen() {
       color: "#10b981",
     },
   ];
-
-  // Skeleton Loader Component
-  const SkeletonLoader = () => (
-    <View style={styles.skeletonContainer}>
-      {/* Stats Skeleton */}
-      <View style={styles.statsContainer}>
-        {[1, 2, 3].map((item) => (
-          <View key={item} style={styles.statCard}>
-            <View style={[styles.skeleton, styles.skeletonIcon]} />
-            <View style={[styles.skeleton, styles.skeletonValue]} />
-            <View style={[styles.skeleton, styles.skeletonLabel]} />
-          </View>
-        ))}
-      </View>
-
-      {/* Welcome Card Skeleton */}
-      <View style={styles.welcomeCard}>
-        <View style={[styles.skeleton, styles.skeletonWelcomeIcon]} />
-        <View style={[styles.skeleton, styles.skeletonTitle]} />
-        <View style={[styles.skeleton, styles.skeletonText]} />
-        <View style={[styles.skeleton, styles.skeletonText, { width: '60%' }]} />
-      </View>
-
-      {/* Menu Grid Skeleton */}
-      <View style={styles.menuContainer}>
-        <View style={[styles.skeleton, styles.skeletonSectionTitle]} />
-        <View style={styles.menuGrid}>
-          {[1, 2, 3, 4].map((item) => (
-            <View key={item} style={styles.menuItem}>
-              <View style={[styles.skeleton, styles.skeletonMenuIcon]} />
-              <View style={[styles.skeleton, styles.skeletonMenuTitle]} />
-              <View style={[styles.skeleton, styles.skeletonMenuSubtitle]} />
-            </View>
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-
-  if (loading) {
-    return (
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <View>
-              <Text style={styles.greeting}>Olá,</Text>
-              <Text style={styles.userName}>{user?.name || "Usuário"}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.profileButton}
-              onPress={() => router.push("/(tabs)/profile")}
-            >
-              <View style={styles.avatarContainer}>
-                <Ionicons name="person" size={24} color="#8b5cf6" />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <SkeletonLoader />
-      </ScrollView>
-    );
-  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -282,7 +212,7 @@ export default function HomeScreen() {
         >
           <View style={styles.actionLeft}>
             <View style={[styles.actionIconContainer, { backgroundColor: "#ec489920" }]}>
-              <Ionicons name="sparkles" size={24} color="#ec4899" />
+              <Ionicons name="flash-outline" size={24} color="#ec4899" />
             </View>
             <View>
               <Text style={styles.actionTitle}>Gerar com IA</Text>
@@ -505,67 +435,5 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 18,
     marginLeft: 12,
-  },
-  // Skeleton Styles
-  skeletonContainer: {
-    flex: 1,
-  },
-  skeleton: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  skeletonIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  skeletonValue: {
-    width: 60,
-    height: 24,
-    marginBottom: 8,
-  },
-  skeletonLabel: {
-    width: 80,
-    height: 14,
-  },
-  skeletonWelcomeIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginBottom: 16,
-    alignSelf: "center",
-  },
-  skeletonTitle: {
-    width: 200,
-    height: 24,
-    marginBottom: 12,
-    alignSelf: "center",
-  },
-  skeletonText: {
-    width: "100%",
-    height: 16,
-    marginBottom: 8,
-  },
-  skeletonSectionTitle: {
-    width: 150,
-    height: 20,
-    marginBottom: 16,
-  },
-  skeletonMenuIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    marginBottom: 12,
-  },
-  skeletonMenuTitle: {
-    width: "80%",
-    height: 18,
-    marginBottom: 8,
-  },
-  skeletonMenuSubtitle: {
-    width: "60%",
-    height: 14,
   },
 });

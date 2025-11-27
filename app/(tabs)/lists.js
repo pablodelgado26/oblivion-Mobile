@@ -64,7 +64,7 @@ export default function ListsScreen() {
         <Text style={styles.headerTitle}>Minhas Listas</Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push("/create")}
+          onPress={() => router.push("/(tabs)/create")}
         >
           <Ionicons name="add" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -100,7 +100,7 @@ export default function ListsScreen() {
               <TouchableOpacity
                 key={list.id}
                 style={styles.listCard}
-                onPress={() => router.push(`/list_ID?id=${list.id}`)}
+                onPress={() => router.push(`/list?id=${list.id}`)}
               >
                 <View style={styles.listHeader}>
                   <View style={styles.listIconContainer}>
