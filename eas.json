@@ -13,12 +13,12 @@
       },
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyCL2xcwmiex9G_qL43j1PwYILO-04uR2C4"
+        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyDn22YvYQKQEMqiA0fDSJysDMQc1CeCUmw"
       }
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyCL2xcwmiex9G_qL43j1PwYILO-04uR2C4"
+        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyDn22YvYQKQEMqiA0fDSJysDMQc1CeCUmw"
       }
     }
   },

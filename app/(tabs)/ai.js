@@ -28,8 +28,6 @@ export default function AIScreen() {
   const [response, setResponse] = useState("");
   const [error, setError] = useState("");
   const [generatedList, setGeneratedList] = useState(null);
-  const [testing, setTesting] = useState(false);
-  const [modelsInfo, setModelsInfo] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const generateShoppingList = async () => {
@@ -51,6 +49,11 @@ export default function AIScreen() {
     setGeneratedList(null);
 
     try {
+      // Verificação básica de conectividade
+      if (!GEMINI_API_KEY) {
+        throw new Error("API Key do Gemini não está configurada. Configure EXPO_PUBLIC_GEMINI_API_KEY no .env");
+      }
+      
       const systemPrompt = `Você é um assistente de lista de compras. Baseado na descrição do usuário, gere uma lista de compras organizada.
 
 CRÍTICO: Sua resposta deve ser SOMENTE um objeto JSON válido, sem texto adicional antes ou depois. Não use markdown, não explique, apenas retorne o JSON puro no formato exato abaixo:
@@ -89,38 +92,57 @@ Responda SOMENTE com o JSON, nada mais.`;
       let apiResponse;
       let usedEndpoint = "";
       let lastErrorBody = null;
+      let fetchError = null;
 
       for (const ver of apiVersions) {
         for (const model of candidateModels) {
-          const endpoint = `https://generativelanguage.googleapis.com/${ver}/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
-          usedEndpoint = endpoint;
-          apiResponse = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [ { parts: [ { text: systemPrompt } ] } ],
-              generationConfig: {
-                temperature: 0.7,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 1024,
-              },
-            }),
-          });
-
-          let bodyJson = null;
           try {
-            bodyJson = await apiResponse.clone().json();
-            lastErrorBody = bodyJson;
-          } catch (_) {
-            // ignora erro de parse para tentativas
-          }
+            const endpoint = `https://generativelanguage.googleapis.com/${ver}/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+            usedEndpoint = endpoint;
+            
+            console.log(`Tentando modelo ${model} (${ver})...`);
+            
+            apiResponse = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [ { parts: [ { text: systemPrompt } ] } ],
+                generationConfig: {
+                  temperature: 0.7,
+                  topK: 40,
+                  topP: 0.95,
+                  maxOutputTokens: 8192,
+                },
+              }),
+            });
 
-          if (apiResponse.ok) {
-            break;
+            let bodyJson = null;
+            try {
+              bodyJson = await apiResponse.clone().json();
+              lastErrorBody = bodyJson;
+            } catch (_) {
+              // ignora erro de parse para tentativas
+            }
+
+            if (apiResponse.ok) {
+              console.log(`✓ Modelo ${model} funcionou!`);
+              break;
+            }
+          } catch (fetchErr) {
+            console.error(`Erro de fetch no modelo ${model}:`, fetchErr);
+            fetchError = fetchErr;
+            // Continua tentando outros modelos
           }
         }
         if (apiResponse?.ok) break;
+      }
+      
+      // Se todos os modelos falharam no fetch
+      if (!apiResponse) {
+        throw new Error(
+          `Falha ao conectar com a API do Gemini. Verifique sua conexão de internet. ` +
+          `Detalhes: ${fetchError?.message || "Nenhuma resposta recebida"}`
+        );
       }
       let data;
       try {
@@ -152,6 +174,12 @@ Responda SOMENTE com o JSON, nada mais.`;
       // Debug: log estrutura completa da resposta
       console.log("Resposta completa da API:", JSON.stringify(data, null, 2));
       
+      // Verificar finishReason antes de processar
+      const finishReason = data.candidates?.[0]?.finishReason;
+      if (finishReason === "MAX_TOKENS") {
+        console.warn("⚠️ Resposta cortada por MAX_TOKENS. Considere usar um prompt mais conciso ou modelo diferente.");
+      }
+      
       // Extrair texto da resposta - suporta múltiplos formatos da API Gemini
       let textResponse = "";
       
@@ -175,12 +203,19 @@ Responda SOMENTE com o JSON, nada mais.`;
       // Debug: verificar se textResponse está vazio
       if (!textResponse) {
         console.error("textResponse vazio. Estrutura completa:", JSON.stringify(data.candidates?.[0], null, 2));
-        setError(`Resposta vazia da API. Debug: ${JSON.stringify({
-          hasCandidates: !!data.candidates,
-          candidatesLength: data.candidates?.length,
-          hasContent: !!data.candidates?.[0]?.content,
-          contentKeys: data.candidates?.[0]?.content ? Object.keys(data.candidates[0].content) : null,
-        })}`);
+        
+        // Se o finishReason é MAX_TOKENS mas não há conteúdo, é um erro diferente
+        if (finishReason === "MAX_TOKENS") {
+          setError("A resposta da IA foi cortada por limite de tokens e não retornou conteúdo válido. Tente um prompt mais simples ou aumente maxOutputTokens.");
+        } else {
+          setError(`Resposta vazia da API. Debug: ${JSON.stringify({
+            hasCandidates: !!data.candidates,
+            candidatesLength: data.candidates?.length,
+            hasContent: !!data.candidates?.[0]?.content,
+            contentKeys: data.candidates?.[0]?.content ? Object.keys(data.candidates[0].content) : null,
+            finishReason: finishReason,
+          })}`);
+        }
         setLoading(false);
         return;
       }
@@ -225,46 +260,6 @@ Responda SOMENTE com o JSON, nada mais.`;
       setError(err.message || "Erro ao gerar lista. Tente novamente.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Testar modelos disponíveis para a chave atual
-  const testModels = async () => {
-    if (!GEMINI_API_KEY) {
-      setError(
-        "API Key do Gemini não configurada. Crie .env com EXPO_PUBLIC_GEMINI_API_KEY e reinicie."
-      );
-      return;
-    }
-
-    setTesting(true);
-    setError("");
-    setModelsInfo(null);
-
-    const versions = ["v1beta", "v1"];
-    const results = [];
-
-    try {
-      for (const ver of versions) {
-        const url = `https://generativelanguage.googleapis.com/${ver}/models?key=${GEMINI_API_KEY}`;
-        const res = await fetch(url);
-        let data = null;
-        try {
-          data = await res.json();
-        } catch (_) {}
-
-        if (res.ok && data?.models) {
-          results.push({ version: ver, models: data.models });
-        } else {
-          results.push({ version: ver, error: data?.error?.message || res.statusText });
-        }
-      }
-
-      setModelsInfo(results);
-    } catch (e) {
-      setError(e?.message || "Falha ao testar modelos");
-    } finally {
-      setTesting(false);
     }
   };
 
@@ -417,21 +412,6 @@ Responda SOMENTE com o JSON, nada mais.`;
                 <Text style={styles.clearButtonText}>Limpar</Text>
               </TouchableOpacity>
             )}
-
-            <TouchableOpacity
-              style={[styles.testButton, (testing || loading) && styles.buttonDisabled]}
-              onPress={testModels}
-              disabled={testing || loading}
-            >
-              {testing ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="cloud-outline" size={20} color="#fff" />
-                  <Text style={styles.testButtonText}>Testar Modelos</Text>
-                </>
-              )}
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -489,31 +469,6 @@ Responda SOMENTE com o JSON, nada mais.`;
                 </>
               )}
             </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Models Info */}
-        {modelsInfo && (
-          <View style={styles.modelsCard}>
-            <Text style={styles.modelsTitle}>Modelos disponíveis</Text>
-            {modelsInfo.map((group, idx) => (
-              <View key={idx} style={styles.modelsGroup}>
-                <Text style={styles.modelsVersion}>Versão {group.version}</Text>
-                {group.error ? (
-                  <Text style={styles.modelsError}>Erro: {group.error}</Text>
-                ) : (
-                  group.models.map((m, i) => (
-                    <View key={i} style={styles.modelItem}>
-                      <Ionicons name="cube-outline" size={16} color="#8b5cf6" />
-                      <Text style={styles.modelName}>{m.name}</Text>
-                    </View>
-                  ))
-                )}
-              </View>
-            ))}
-            <Text style={styles.modelsHint}>
-              Dica: use um dos modelos acima com generateContent. Se nenhum listar, verifique permissões da sua API key.
-            </Text>
           </View>
         )}
 
