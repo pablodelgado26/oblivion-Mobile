@@ -133,36 +133,6 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Excluir Conta",
-      "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão permanentemente removidos.",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel"
-        },
-        {
-          text: "Excluir",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const result = await deleteAccount();
-              if (result.success) {
-                Alert.alert("Sucesso", "Sua conta foi excluída com sucesso.");
-              } else {
-                Alert.alert("Erro", result.message || "Não foi possível excluir a conta");
-              }
-            } catch (error) {
-              console.error("Erro ao excluir conta:", error);
-              Alert.alert("Erro", "Ocorreu um erro ao excluir a conta");
-            }
-          }
-        }
-      ],
-      { cancelable: true }
-    );
-  };
 
   return (
     <ScrollView style={styles.container}>
@@ -282,11 +252,6 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Sair da Conta</Text>
         </TouchableOpacity>
 
-        {/* Botão Excluir Conta */}
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
-          <Ionicons name="trash-outline" size={20} color="#FF453A" style={styles.deleteIcon} />
-          <Text style={styles.deleteText}>Excluir Conta</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Modal de Edição de Perfil */}
