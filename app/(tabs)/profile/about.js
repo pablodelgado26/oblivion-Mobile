@@ -40,13 +40,7 @@ export default function AboutScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        {/* Back Button */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#ffffff" />
-        </TouchableOpacity>
+
 
         {/* Logo e Nome */}
         <View style={styles.header}>
@@ -111,7 +105,7 @@ export default function AboutScreen() {
             <LinkItem
               icon="logo-github"
               title="GitHub"
-              url="https://github.com/oblivion-mobile"
+              url="https://github.com/pablodelgado26/oblivion-Mobile.git"
             />
             <LinkItem
               icon="document-text-outline"

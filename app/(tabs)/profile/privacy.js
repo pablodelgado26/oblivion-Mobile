@@ -34,13 +34,7 @@ export default function PrivacyScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        {/* Back Button */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#ffffff" />
-        </TouchableOpacity>
+
 
         {/* Header */}
         <View style={styles.header}>
