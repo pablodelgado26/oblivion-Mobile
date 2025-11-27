@@ -7,32 +7,14 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#0A0A0A",
-          borderTopWidth: 1,
-          borderTopColor: "#1C1C1E",
+          display: "none", // Esconde as tabs
         },
-        tabBarActiveTintColor: "#5856D6",
-        tabBarInactiveTintColor: "#8E8E93",
       }}
     >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Perfil",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="home" />
+      <Tabs.Screen name="list" />
+      <Tabs.Screen name="ai" />
+      <Tabs.Screen name="profile" />
     </Tabs>
   );
 }

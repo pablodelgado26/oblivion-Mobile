@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 const FAQItem = ({ question, answer }) => {
   const [expanded, setExpanded] = useState(false);
@@ -44,6 +45,8 @@ const ContactItem = ({ icon, title, subtitle, action, iconColor = "#5856D6" }) =
 );
 
 export default function HelpScreen() {
+  const router = useRouter();
+  
   const openEmail = () => {
     Linking.openURL("mailto:suporte@oblivion.com");
   };
@@ -59,6 +62,14 @@ export default function HelpScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
+        {/* Back Button */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#ffffff" />
+        </TouchableOpacity>
+
         {/* Header */}
         <View style={styles.header}>
           <Ionicons name="help-buoy" size={48} color="#5856D6" />
@@ -150,6 +161,14 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 40,
+    marginBottom: 10,
+  },
   header: {
     alignItems: "center",
     marginBottom: 32,
@@ -210,7 +229,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#38383A",
   },
   contactContainer: {
-    gap: 12,
   },
   contactItem: {
     flexDirection: "row",
@@ -218,6 +236,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
     borderRadius: 12,
     padding: 16,
+    marginBottom: 12,
   },
   contactIcon: {
     width: 48,

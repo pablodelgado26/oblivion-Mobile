@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 const InfoRow = ({ label, value }) => (
   <View style={styles.infoRow}>
@@ -34,9 +35,19 @@ const LinkItem = ({ icon, title, url }) => (
 );
 
 export default function AboutScreen() {
+  const router = useRouter();
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
+        {/* Back Button */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#ffffff" />
+        </TouchableOpacity>
+
         {/* Logo e Nome */}
         <View style={styles.header}>
           <Image
@@ -144,6 +155,14 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 40,
+    marginBottom: 10,
+  },
   header: {
     alignItems: "center",
     paddingVertical: 32,
@@ -241,12 +260,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 12,
-    gap: 12,
   },
   linkText: {
     flex: 1,
     fontSize: 17,
     color: "#fff",
+    marginLeft: 12,
   },
   footer: {
     alignItems: "center",
@@ -272,11 +291,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
-    gap: 12,
   },
   thanksText: {
     fontSize: 17,
     color: "#fff",
     fontWeight: "500",
+    marginLeft: 12,
   },
 });

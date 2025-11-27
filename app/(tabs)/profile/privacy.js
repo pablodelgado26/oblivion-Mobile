@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 const InfoCard = ({ icon, title, description }) => (
   <View style={styles.infoCard}>
@@ -28,9 +29,19 @@ const ActionItem = ({ icon, title, subtitle, onPress }) => (
 );
 
 export default function PrivacyScreen() {
+  const router = useRouter();
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
+        {/* Back Button */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#ffffff" />
+        </TouchableOpacity>
+
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerText}>
@@ -101,6 +112,14 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 40,
+    marginBottom: 10,
   },
   header: {
     marginBottom: 24,

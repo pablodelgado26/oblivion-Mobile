@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: 20,
     paddingBottom: 20,
-    gap: 10,
+    // gap: 10,
   },
   searchBar: {
     flex: 1,
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    gap: 10,
+    // gap: 10,
   },
   searchInput: { flex: 1, fontSize: 16, color: "#fff" },
   iconButton: {
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 15,
-    gap: 10,
+    // gap: 10,
   },
   progressBg: {
     flex: 1,

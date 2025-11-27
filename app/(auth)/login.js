@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
-    gap: 8,
+    // gap: 8,
   },
   errorText: {
     color: "#dc2626",

@@ -138,8 +138,16 @@ export default function ProfileScreen() {
       <View style={styles.content}>
         {/* Header do Perfil */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Perfil</Text>
-          <Text style={styles.headerSubtitle}>Gerencie sua conta</Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Perfil</Text>
+            <Text style={styles.headerSubtitle}>Gerencie sua conta</Text>
+          </View>
         </View>
 
         {/* Avatar e Info */}
@@ -313,6 +321,18 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 50,
     paddingBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 34,
@@ -473,7 +493,6 @@ const styles = StyleSheet.create({
   },
   modalButtons: {
     flexDirection: "row",
-    gap: 12,
     marginTop: 16,
   },
   modalButton: {
@@ -481,6 +500,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     alignItems: "center",
+    marginHorizontal: 6,
   },
   cancelButton: {
     backgroundColor: "#2C2C2E",

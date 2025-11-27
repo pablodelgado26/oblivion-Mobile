@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 80,
     alignSelf: "center",
-    gap: 8,
+    // gap: 8,
   },
   loadingDot: {
     width: 10,

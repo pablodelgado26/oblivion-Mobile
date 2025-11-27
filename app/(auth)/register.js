@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
-    gap: 8,
+    // gap: 8,
   },
   errorText: {
     color: "#dc2626",
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 24,
     padding: 12,
-    gap: 8,
+    // gap: 8,
   },
   backText: {
     color: "#8b5cf6",
