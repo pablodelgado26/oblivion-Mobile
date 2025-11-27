@@ -89,10 +89,25 @@ export default function ListScreen() {
           text: "Excluir",
           style: "destructive",
           onPress: async () => {
-            const updatedItems = list.items.filter((item) => item.id !== itemId);
-            const result = await updateList(id, { items: updatedItems });
-            if (result.success) {
-              setList(result.list);
+            try {
+              console.log("Deletando item:", itemId);
+              console.log("Itens antes:", list.items.length);
+              
+              const updatedItems = list.items.filter((item) => item.id !== itemId);
+              console.log("Itens depois do filtro:", updatedItems.length);
+              
+              const result = await updateList(id, { items: updatedItems });
+              console.log("Resultado da atualização:", result);
+              
+              if (result.success) {
+                setList(result.list);
+                Alert.alert("Sucesso", "Item excluído com sucesso!");
+              } else {
+                Alert.alert("Erro", result.message || "Não foi possível excluir o item");
+              }
+            } catch (error) {
+              console.error("Erro ao deletar item:", error);
+              Alert.alert("Erro", "Ocorreu um erro ao excluir o item");
             }
           },
         },
@@ -192,8 +207,10 @@ export default function ListScreen() {
                 <TouchableOpacity
                   style={styles.deleteItemButton}
                   onPress={() => handleDeleteItem(item.id)}
+                  activeOpacity={0.6}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons name="trash-outline" size={20} color="#dc2626" />
+                  <Ionicons name="trash-outline" size={22} color="#ef4444" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -350,6 +367,11 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: "center",
     justifyContent: "center",
+    marginLeft: 8,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#27272a",
   },
   emptyState: {
     alignItems: "center",
