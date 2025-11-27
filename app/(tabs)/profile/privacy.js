@@ -1,7 +1,8 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const InfoCard = ({ icon, title, description }) => (
   <View style={styles.infoCard}>
@@ -30,6 +31,90 @@ const ActionItem = ({ icon, title, subtitle, onPress }) => (
 
 export default function PrivacyScreen() {
   const router = useRouter();
+  const { deleteAccount, updatePassword, signOut } = useAuth();
+  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Excluir Conta",
+      "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão permanentemente removidos.",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const result = await deleteAccount();
+              if (result.success) {
+                Alert.alert("Sucesso", "Sua conta foi excluída com sucesso.");
+              } else {
+                Alert.alert("Erro", result.message || "Não foi possível excluir a conta");
+              }
+            } catch (error) {
+              console.error("Erro ao excluir conta:", error);
+              Alert.alert("Erro", "Ocorreu um erro ao excluir a conta");
+            }
+          }
+        }
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleChangePassword = () => {
+    setChangePasswordModalVisible(true);
+  };
+
+  const saveNewPassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      Alert.alert("Erro", "Preencha todos os campos");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Alert.alert("Erro", "A nova senha deve ter no mínimo 6 caracteres");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Erro", "As senhas não coincidem");
+      return;
+    }
+
+    try {
+      const result = await updatePassword(currentPassword, newPassword);
+      if (result.success) {
+        setChangePasswordModalVisible(false);
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        Alert.alert(
+          "Sucesso", 
+          "Senha alterada com sucesso! Você será desconectado.",
+          [
+            {
+              text: "OK",
+              onPress: async () => {
+                await signOut();
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert("Erro", result.message || "Não foi possível alterar a senha");
+      }
+    } catch (error) {
+      console.error("Erro ao alterar senha:", error);
+      Alert.alert("Erro", "Ocorreu um erro ao alterar a senha");
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -76,12 +161,14 @@ export default function PrivacyScreen() {
               icon="key-outline"
               title="Alterar Senha"
               subtitle="Atualize sua senha de acesso"
+              onPress={handleChangePassword}
             />
             <View style={styles.separator} />
             <ActionItem
               icon="trash-outline"
               title="Excluir Conta"
               subtitle="Remover todos os seus dados"
+              onPress={handleDeleteAccount}
             />
           </View>
         </View>
@@ -95,6 +182,77 @@ export default function PrivacyScreen() {
           </Text>
         </View>
       </View>
+
+      {/* Modal de Alterar Senha */}
+      <Modal
+        visible={changePasswordModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setChangePasswordModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Alterar Senha</Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Senha Atual</Text>
+              <TextInput
+                style={styles.input}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                placeholder="Digite sua senha atual"
+                placeholderTextColor="#666"
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Nova Senha</Text>
+              <TextInput
+                style={styles.input}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder="Digite a nova senha"
+                placeholderTextColor="#666"
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Confirmar Nova Senha</Text>
+              <TextInput
+                style={styles.input}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Confirme a nova senha"
+                placeholderTextColor="#666"
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setChangePasswordModalVisible(false);
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={saveNewPassword}
+              >
+                <Text style={styles.saveButtonText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -213,5 +371,72 @@ const styles = StyleSheet.create({
     color: "#8E8E93",
     lineHeight: 18,
     marginLeft: 12,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#1C1C1E",
+    borderRadius: 14,
+    padding: 24,
+    width: "100%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#fff",
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: "#2C2C2E",
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 17,
+    color: "#fff",
+    borderWidth: 1,
+    borderColor: "#38383A",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    marginTop: 16,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginHorizontal: 6,
+  },
+  cancelButton: {
+    backgroundColor: "#2C2C2E",
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  saveButton: {
+    backgroundColor: "#5856D6",
+  },
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "600",
   },
 });

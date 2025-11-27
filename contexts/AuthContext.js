@@ -7,6 +7,8 @@ import {
   validateLogin,
   saveNewUser,
   updateUserInDB,
+  deleteUserAccount,
+  changePassword,
 } from "../utils/storage";
 import { useRouter, useSegments } from "expo-router";
 
@@ -126,6 +128,41 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      if (!user) {
+        return { success: false, message: "Usuário não encontrado" };
+      }
+
+      const result = await deleteUserAccount(user.id);
+      
+      if (result.success) {
+        setUser(null);
+        // A navegação será tratada automaticamente pelo useEffect
+        return { success: true };
+      }
+
+      return { success: false, message: result.message };
+    } catch (error) {
+      console.error("Erro ao deletar conta:", error);
+      return { success: false, message: "Erro ao deletar conta" };
+    }
+  };
+
+  const updatePassword = async (currentPassword, newPassword) => {
+    try {
+      if (!user) {
+        return { success: false, message: "Usuário não encontrado" };
+      }
+
+      const result = await changePassword(user.id, currentPassword, newPassword);
+      return result;
+    } catch (error) {
+      console.error("Erro ao alterar senha:", error);
+      return { success: false, message: "Erro ao alterar senha" };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -135,6 +172,8 @@ export const AuthProvider = ({ children }) => {
         signUp,
         signOut,
         updateUser,
+        deleteAccount,
+        updatePassword,
       }}
     >
       {children}

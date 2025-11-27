@@ -38,7 +38,7 @@ const SettingsItem = ({ iconName, title, subtitle, onPress, showArrow = true, ri
 );
 
 export default function ProfileScreen() {
-  const { user, signOut, updateUser } = useAuth();
+  const { user, signOut, updateUser, deleteAccount } = useAuth();
   const router = useRouter();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false);
@@ -125,6 +125,37 @@ export default function ProfileScreen() {
               await signOut();
             } catch (error) {
               console.error("Erro ao sair:", error);
+            }
+          }
+        }
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Excluir Conta",
+      "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão permanentemente removidos.",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const result = await deleteAccount();
+              if (result.success) {
+                Alert.alert("Sucesso", "Sua conta foi excluída com sucesso.");
+              } else {
+                Alert.alert("Erro", result.message || "Não foi possível excluir a conta");
+              }
+            } catch (error) {
+              console.error("Erro ao excluir conta:", error);
+              Alert.alert("Erro", "Ocorreu um erro ao excluir a conta");
             }
           }
         }
@@ -249,6 +280,12 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color="#FF453A" style={styles.logoutIcon} />
           <Text style={styles.logoutText}>Sair da Conta</Text>
+        </TouchableOpacity>
+
+        {/* Botão Excluir Conta */}
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+          <Ionicons name="trash-outline" size={20} color="#FF453A" style={styles.deleteIcon} />
+          <Text style={styles.deleteText}>Excluir Conta</Text>
         </TouchableOpacity>
       </View>
 
@@ -450,6 +487,26 @@ const styles = StyleSheet.create({
     color: "#FF453A",
     fontSize: 17,
     fontWeight: "400",
+  },
+  deleteButton: {
+    flexDirection: "row",
+    backgroundColor: "#1C1C1E",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+    marginBottom: 40,
+    borderWidth: 1,
+    borderColor: "#FF453A",
+  },
+  deleteIcon: {
+    marginRight: 8,
+  },
+  deleteText: {
+    color: "#FF453A",
+    fontSize: 17,
+    fontWeight: "600",
   },
   // Modal Styles
   modalOverlay: {
