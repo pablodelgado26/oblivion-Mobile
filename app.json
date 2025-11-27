@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Oblivion",
-    "slug": "oblivion-list",
+    "slug": "oblivion-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
