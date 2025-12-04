@@ -12,16 +12,9 @@
       "android": {
         "buildType": "apk"
       },
-      "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyDn22YvYQKQEMqiA0fDSJysDMQc1CeCUmw"
-      }
+      "distribution": "internal"
     },
-    "production": {
-      "env": {
-        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyDn22YvYQKQEMqiA0fDSJysDMQc1CeCUmw"
-      }
-    }
+    "production": {}
   },
   "submit": {
     "production": {}
